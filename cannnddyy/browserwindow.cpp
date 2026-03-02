@@ -1,73 +1,66 @@
 #include "browserwindow.h"
+#include "candyschemehandler.h"
+
 #include <QToolBar>
-#include <QVBoxLayout>
-#include <QShortcut>
-#include <QFile>
 #include <QWebEngineProfile>
-#include <QWebEnginePage>
 
 BrowserWindow::BrowserWindow()
 {
     setupUI();
-    createNewTab();
-    setupShortcuts();
 
-    setStyleSheet(
-        "QMainWindow {"
-        "background: qlineargradient(x1:0,y1:0,x2:1,y2:1, stop:0 #3b82f6, stop:1 #ec4899);"
-        "}"
+    QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(
+        "candy",
+        new CandySchemeHandler()
     );
+
+    addNewTab(QUrl("candy://about"));
 }
 
 void BrowserWindow::setupUI()
 {
-    tabs = new QTabWidget();
-    tabs->setTabsClosable(true);
+    tabs = new QTabWidget(this);
     setCentralWidget(tabs);
-
-    connect(tabs, &QTabWidget::tabCloseRequested, this, [=](int index){
-        tabs->removeTab(index);
-    });
 
     QToolBar *toolbar = addToolBar("Navigation");
 
-    urlBar = new QLineEdit();
-    toolbar->addWidget(urlBar);
+    QAction *backAction = toolbar->addAction("←");
+    QAction *forwardAction = toolbar->addAction("→");
+    QAction *reloadAction = toolbar->addAction("⟳");
 
-    connect(urlBar, &QLineEdit::returnPressed, this, [=](){
-        QUrl url = QUrl::fromUserInput(urlBar->text());
+    addressBar = new QLineEdit();
+    toolbar->addWidget(addressBar);
+
+    connect(addressBar, &QLineEdit::returnPressed, this, [=](){
+        QUrl url = QUrl::fromUserInput(addressBar->text());
         QWebEngineView *view = qobject_cast<QWebEngineView*>(tabs->currentWidget());
-        if(view) view->setUrl(url);
+        if(view)
+            view->load(url);
+    });
+
+    connect(backAction, &QAction::triggered, this, [=](){
+        QWebEngineView *view = qobject_cast<QWebEngineView*>(tabs->currentWidget());
+        if(view) view->back();
+    });
+
+    connect(forwardAction, &QAction::triggered, this, [=](){
+        QWebEngineView *view = qobject_cast<QWebEngineView*>(tabs->currentWidget());
+        if(view) view->forward();
+    });
+
+    connect(reloadAction, &QAction::triggered, this, [=](){
+        QWebEngineView *view = qobject_cast<QWebEngineView*>(tabs->currentWidget());
+        if(view) view->reload();
     });
 }
 
-void BrowserWindow::createNewTab(const QUrl &url)
+void BrowserWindow::addNewTab(const QUrl &url)
 {
     QWebEngineView *view = new QWebEngineView();
-    view->setUrl(url);
-
-    connect(view, &QWebEngineView::urlChanged, this, [=](const QUrl &url){
-        urlBar->setText(url.toString());
-
-        // Basic history tracking
-        QFile file("history.txt");
-        if(file.open(QIODevice::Append)) {
-            file.write((url.toString() + "\n").toUtf8());
-        }
-    });
+    view->load(url);
 
     tabs->addTab(view, "New Tab");
-    tabs->setCurrentWidget(view);
-}
 
-void BrowserWindow::setupShortcuts()
-{
-    new QShortcut(QKeySequence("Ctrl+T"), this, [=](){
-        createNewTab();
-    });
-
-    new QShortcut(QKeySequence("Ctrl+H"), this, [=](){
-        QWebEngineView *view = qobject_cast<QWebEngineView*>(tabs->currentWidget());
-        if(view) view->setUrl(QUrl("candy://history"));
+    connect(view, &QWebEngineView::urlChanged, this, [=](const QUrl &url){
+        addressBar->setText(url.toString());
     });
 }
