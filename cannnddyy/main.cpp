@@ -4,13 +4,12 @@
 
 int main(int argc, char *argv[])
 {
-    QWebEngineUrlScheme scheme("candy");
-    scheme.setFlags(QWebEngineUrlScheme::SecureScheme |
-                    QWebEngineUrlScheme::LocalScheme |
-                    QWebEngineUrlScheme::LocalAccessAllowed);
-    QWebEngineUrlScheme::registerScheme(scheme);
-
     QApplication app(argc, argv);
+
+    QWebEngineUrlScheme scheme("candy");
+    scheme.setFlags(QWebEngineUrlScheme::LocalScheme |
+                    QWebEngineUrlScheme::SecureScheme);
+    QWebEngineUrlScheme::registerScheme(scheme);
 
     BrowserWindow window;
     window.show();
