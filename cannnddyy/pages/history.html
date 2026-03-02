@@ -1,1 +1,13 @@
-
+<!DOCTYPE html>
+<html>
+<body style="background: linear-gradient(135deg,#3b82f6,#ec4899); color:white; font-family:sans-serif;">
+<h1>Browsing History</h1>
+<pre id="history"></pre>
+<script>
+fetch("history.txt")
+.then(r=>r.text())
+.then(t=>document.getElementById("history").innerText=t)
+.catch(()=>document.getElementById("history").innerText="No history yet.");
+</script>
+</body>
+</html>
