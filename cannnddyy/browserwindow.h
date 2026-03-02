@@ -4,7 +4,6 @@
 #include <QTabWidget>
 #include <QLineEdit>
 #include <QWebEngineView>
-#include <QWebEngineUrlSchemeHandler>
 
 class BrowserWindow : public QMainWindow
 {
@@ -15,10 +14,8 @@ public:
 
 private:
     QTabWidget *tabs;
-    QLineEdit *urlBar;
+    QLineEdit *addressBar;
 
-    void createNewTab(const QUrl &url = QUrl("https://www.bing.com"));
     void setupUI();
-    void setupShortcuts();
-    void handleCustomUrl(QWebEngineView *view);
+    void addNewTab(const QUrl &url);
 };
