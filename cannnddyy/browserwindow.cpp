@@ -4,9 +4,11 @@
 #include <QPushButton>
 #include <QLineEdit>
 #include <QComboBox>
-#include <QWebEnginePage>
+#include <QWebEngineView>
 #include <QWebChannel>
 #include <QDir>
+#include <QTimer>
+#include <QCoreApplication>
 
 BrowserWindow::BrowserWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -22,7 +24,7 @@ BrowserWindow::BrowserWindow(QWidget *parent)
     connect(tabWidget, &QTabWidget::currentChanged, this, &BrowserWindow::switchTab);
     connect(tabWidget, &QTabWidget::tabCloseRequested, this, &BrowserWindow::closeTab);
 
-    // Timer for time limits
+    // timer for time limits
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, [=]() {
         for (auto &t : tabs) {
@@ -31,8 +33,8 @@ BrowserWindow::BrowserWindow(QWidget *parent)
     });
     timer->start(60000); // every minute
 
-    // First launch
-    QString setupPage = QDir::current().absoluteFilePath("Cannnddyy/pages/setup.html");
+    // first launch
+    QString setupPage = QDir(QCoreApplication::applicationDirPath()).filePath("cannnddyy/pages/setup.html");
     if (!bridge->getInitialized()) {
         addNewTab(QUrl::fromLocalFile(setupPage).toString());
     } else {
@@ -70,7 +72,7 @@ void BrowserWindow::addNewTab(const QString &url)
 {
     QWebEngineView *view = new QWebEngineView(this);
 
-    // Setup web channel
+    // web channel for settings bridge
     QWebChannel *channel = new QWebChannel(view->page());
     channel->registerObject("settingsBridge", bridge);
     view->page()->setWebChannel(channel);
@@ -91,7 +93,7 @@ void BrowserWindow::addNewTab(const QString &url)
         QString s = u.toString();
         tab.url = s;
 
-        // Handle candy:// URLs
+        // handle candy:// urls
         if (s.startsWith("candy://")) {
             QString pageFile;
             if (s == "candy://about") pageFile = "about.html";
@@ -102,21 +104,21 @@ void BrowserWindow::addNewTab(const QString &url)
             else if (s == "candy://setup") pageFile = "setup.html";
             else return;
 
-            QString fullPath = QDir::current().absoluteFilePath("Cannnddyy/pages/" + pageFile);
+            QString fullPath = QDir(QCoreApplication::applicationDirPath()).filePath("cannnddyy/pages/" + pageFile);
             view->load(QUrl::fromLocalFile(fullPath));
             return;
         }
 
-        // Blocked sites
+        // blocked sites
         if (isBlocked(s)) {
-            QString fullPath = QDir::current().absoluteFilePath("Cannnddyy/pages/blocked.html");
+            QString fullPath = QDir(QCoreApplication::applicationDirPath()).filePath("cannnddyy/pages/blocked.html");
             view->load(QUrl::fromLocalFile(fullPath));
             return;
         }
 
-        // Time limit
+        // time limit reached
         if (tab.minutesLeft <= 0) {
-            QString fullPath = QDir::current().absoluteFilePath("Cannnddyy/pages/timelimit.html");
+            QString fullPath = QDir(QCoreApplication::applicationDirPath()).filePath("cannnddyy/pages/timelimit.html");
             view->load(QUrl::fromLocalFile(fullPath));
             return;
         }
@@ -166,5 +168,5 @@ bool BrowserWindow::isBlocked(const QString &url)
 
 void BrowserWindow::updateSearchEngineLogo()
 {
-    // Optional: update the toolbar logo dynamically
+    // optional: dynamically update toolbar logo depending on selected search engine
 }
