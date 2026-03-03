@@ -2,39 +2,31 @@
 #define BROWSERWINDOW_H
 
 #include <QMainWindow>
-#include <QTabWidget>
-#include <QLineEdit>
-#include <QToolBar>
-#include <QComboBox>
-#include <QVector>
-#include <QPair>
-#include <QTime>
-#include <QSettings>
-#include <QtWebEngineWidgets/QWebEngineView>
+#include <QWebEngineView>
+#include <QWebChannel>
+#include <QTimer>
+#include "settingsbridge.h"
 
 class BrowserWindow : public QMainWindow
 {
     Q_OBJECT
-
 public:
-    BrowserWindow();
-
-    QVector<QPair<QString, QString>> historyList;
+    BrowserWindow(QWidget *parent=nullptr);
 
 private:
-    QTabWidget *tabs;
-    QLineEdit *addressBar;
-    QComboBox *engineSelector;
+    QWebEngineView *view;
+    SettingsBridge *bridge;
+    QStringList history;
+    QTimer *timer;
+    int minutesLeft;
 
-    QString currentSearchEngine;
-    QStringList blockedSites;
+    void loadPage(const QString &url);
+    bool isBlocked(const QString &url);
+    void checkTimeLimit();
 
-    QTime sessionStart;
-    int allowedMinutes = 60;
-
-    void setupUI();
-    void addNewTab(QUrl url = QUrl("candy://about"));
-    void recordHistory(const QUrl &url, const QString &title);
+private slots:
+    void onLoadStarted();
+    void onLoadFinished(bool ok);
 };
 
 #endif
