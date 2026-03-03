@@ -1,12 +1,12 @@
 #include "browserwindow.h"
 #include <QToolBar>
 #include <QVBoxLayout>
-#include <QHBoxLayout>
 #include <QPushButton>
-#include <QUrl>
-#include <QDir>
+#include <QLineEdit>
+#include <QComboBox>
 #include <QWebEnginePage>
 #include <QWebChannel>
+#include <QDir>
 
 BrowserWindow::BrowserWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -22,20 +22,21 @@ BrowserWindow::BrowserWindow(QWidget *parent)
     connect(tabWidget, &QTabWidget::currentChanged, this, &BrowserWindow::switchTab);
     connect(tabWidget, &QTabWidget::tabCloseRequested, this, &BrowserWindow::closeTab);
 
-    // Timer counts down minutes for all tabs
+    // Timer for time limits
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, [=]() {
         for (auto &t : tabs) {
             if (t.minutesLeft > 0) t.minutesLeft--;
         }
     });
-    timer->start(60000); // 1 minute
+    timer->start(60000); // every minute
 
     // First launch
+    QString setupPage = QDir::current().absoluteFilePath("Cannnddyy/pages/setup.html");
     if (!bridge->getInitialized()) {
-        addNewTab(QUrl::fromLocalFile(QDir::current().absoluteFilePath("Cannnddyy/pages/setup.html")).toString());
+        addNewTab(QUrl::fromLocalFile(setupPage).toString());
     } else {
-        addNewTab(); // Default home page (Bing)
+        addNewTab(); // default search engine
     }
 }
 
@@ -61,13 +62,15 @@ void BrowserWindow::createToolbar()
     toolbar->addWidget(searchEngineBox);
     connect(searchEngineBox, &QComboBox::currentTextChanged, [=](const QString &){
         bridge->setSearchEngine(searchEngineBox->currentText());
-        updateSearchEngineLogo(); // Optional: change logo dynamically
+        updateSearchEngineLogo();
     });
 }
 
 void BrowserWindow::addNewTab(const QString &url)
 {
     QWebEngineView *view = new QWebEngineView(this);
+
+    // Setup web channel
     QWebChannel *channel = new QWebChannel(view->page());
     channel->registerObject("settingsBridge", bridge);
     view->page()->setWebChannel(channel);
@@ -94,7 +97,10 @@ void BrowserWindow::addNewTab(const QString &url)
             if (s == "candy://about") pageFile = "about.html";
             else if (s == "candy://history") pageFile = "history.html";
             else if (s == "candy://settings") pageFile = "settings.html";
-            else return; // Unknown candy:// URL
+            else if (s == "candy://blocked") pageFile = "blocked.html";
+            else if (s == "candy://timelimit") pageFile = "timelimit.html";
+            else if (s == "candy://setup") pageFile = "setup.html";
+            else return;
 
             QString fullPath = QDir::current().absoluteFilePath("Cannnddyy/pages/" + pageFile);
             view->load(QUrl::fromLocalFile(fullPath));
@@ -108,7 +114,7 @@ void BrowserWindow::addNewTab(const QString &url)
             return;
         }
 
-        // Time limit reached
+        // Time limit
         if (tab.minutesLeft <= 0) {
             QString fullPath = QDir::current().absoluteFilePath("Cannnddyy/pages/timelimit.html");
             view->load(QUrl::fromLocalFile(fullPath));
@@ -160,5 +166,5 @@ bool BrowserWindow::isBlocked(const QString &url)
 
 void BrowserWindow::updateSearchEngineLogo()
 {
-    // Optional: update toolbar logo depending on selected search engine
+    // Optional: update the toolbar logo dynamically
 }
