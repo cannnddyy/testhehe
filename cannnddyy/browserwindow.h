@@ -3,9 +3,19 @@
 
 #include <QMainWindow>
 #include <QWebEngineView>
+#include <QWebEngineProfile>
 #include <QWebChannel>
+#include <QTabWidget>
+#include <QLineEdit>
+#include <QComboBox>
 #include <QTimer>
 #include "settingsbridge.h"
+
+struct Tab {
+    QWebEngineView *view;
+    QString url;
+    int minutesLeft;
+};
 
 class BrowserWindow : public QMainWindow
 {
@@ -14,19 +24,24 @@ public:
     BrowserWindow(QWidget *parent=nullptr);
 
 private:
-    QWebEngineView *view;
+    QTabWidget *tabWidget;
+    QLineEdit *urlEdit;
+    QComboBox *searchEngineBox;
     SettingsBridge *bridge;
-    QStringList history;
+    QList<Tab> tabs;
     QTimer *timer;
-    int minutesLeft;
 
-    void loadPage(const QString &url);
+    void createToolbar();
+    void addNewTab(const QString &url="https://www.bing.com");
+    void checkTimeLimits(Tab &tab);
     bool isBlocked(const QString &url);
-    void checkTimeLimit();
 
 private slots:
-    void onLoadStarted();
-    void onLoadFinished(bool ok);
+    void navigate();
+    void switchTab(int index);
+    void closeTab(int index);
+    void updateUrlBar(int index);
+    void updateSearchEngineLogo();
 };
 
 #endif
