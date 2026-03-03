@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.16)
-project(Cannnddyy)
+project(cannnddyy)
 
 set(CMAKE_CXX_STANDARD 17)
 
 find_package(Qt6 COMPONENTS Core Widgets WebEngineWidgets WebChannel REQUIRED)
 
-add_executable(Cannnddyy
+add_executable(cannnddyy
     main.cpp
     browserwindow.cpp
     browserwindow.h
@@ -13,7 +13,7 @@ add_executable(Cannnddyy
     settingsbridge.h
 )
 
-target_link_libraries(Cannnddyy PRIVATE Qt6::Core Qt6::Widgets Qt6::WebEngineWidgets Qt6::WebChannel)
+target_link_libraries(cannnddyy PRIVATE Qt6::Core Qt6::Widgets Qt6::WebEngineWidgets Qt6::WebChannel)
 
-# copy pages from the repo folder to the same level as the executable
-file(COPY ${CMAKE_SOURCE_DIR}/cannnddyy/pages DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/cannnddyy)
+# copy pages folder into build/cannnddyy/pages
+file(COPY ${CMAKE_SOURCE_DIR}/pages DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/cannnddyy)
