@@ -1,143 +1,73 @@
 #include "browserwindow.h"
-#include "candyschemehandler.h"
-#include <QShortcut>
+#include <QWebEnginePage>
 #include <QWebEngineProfile>
+#include <QFile>
+#include <QMessageBox>
+#include <QUrl>
+#include <QTime>
 
-BrowserWindow::BrowserWindow()
+BrowserWindow::BrowserWindow(QWidget *parent)
+    : QMainWindow(parent), minutesLeft(0)
 {
-    setupUI();
+    view = new QWebEngineView(this);
+    setCentralWidget(view);
 
-    sessionStart = QTime::currentTime();
+    bridge = new SettingsBridge(this);
 
-    QSettings settings("Houselearning", "Cannnddyy");
+    QWebChannel *channel = new QWebChannel(view->page());
+    channel->registerObject(QStringLiteral("settingsBridge"), bridge);
+    view->page()->setWebChannel(channel);
 
-    if(!settings.contains("initialized"))
-        addNewTab(QUrl("candy://setup"));
-    else
-        addNewTab();
+    // First-time setup
+    if(!bridge->getInitialized()){
+        view->load(QUrl::fromLocalFile("pages/setup.html"));
+    } else {
+        view->load(QUrl("https://www.bing.com"));
+        minutesLeft = bridge->getTimeLimit();
+    }
 
-    QShortcut *historyShortcut = new QShortcut(QKeySequence("Ctrl+H"), this);
-    connect(historyShortcut, &QShortcut::activated, this, [=](){
-        QWebEngineView *view =
-        qobject_cast<QWebEngineView*>(tabs->currentWidget());
-        if(view)
-            view->load(QUrl("candy://history"));
+    // Timer to count down minutes
+    timer = new QTimer(this);
+    connect(timer,&QTimer::timeout,[=](){
+        if(minutesLeft>0) minutesLeft--;
     });
-}
+    timer->start(60000); // every minute
 
-void BrowserWindow::setupUI()
-{
-    resize(1200, 800);
-    setWindowTitle("Cannnddyy");
+    connect(view,&QWebEngineView::urlChanged,[=](const QUrl &url){
+        QString u = url.toString();
 
-    setStyleSheet(
-        "QMainWindow {"
-        "background: qlineargradient(x1:0,y1:0,x2:1,y2:1,"
-        "stop:0 #3b82f6, stop:1 #ec4899); }"
-    );
-
-    tabs = new QTabWidget();
-    tabs->setTabsClosable(true);
-    setCentralWidget(tabs);
-
-    connect(tabs, &QTabWidget::tabCloseRequested,
-            [=](int index){
-        if(tabs->count() > 1)
-            tabs->removeTab(index);
-    });
-
-    QToolBar *toolbar = addToolBar("Navigation");
-
-    addressBar = new QLineEdit();
-    toolbar->addWidget(addressBar);
-
-    engineSelector = new QComboBox();
-    engineSelector->addItems({"Bing","DuckDuckGo","Google"});
-    toolbar->addWidget(engineSelector);
-
-    currentSearchEngine = "Bing";
-
-    connect(engineSelector,
-            &QComboBox::currentTextChanged,
-            [=](const QString &text){
-        currentSearchEngine = text;
-    });
-
-    connect(addressBar, &QLineEdit::returnPressed, [=](){
-
-        QWebEngineView *view =
-        qobject_cast<QWebEngineView*>(tabs->currentWidget());
-
-        QString input = addressBar->text();
-        QUrl url;
-
-        if(input.startsWith("candy://"))
-        {
-            url = QUrl(input);
-        }
-        else if(!input.contains("."))
-        {
-            if(currentSearchEngine == "Bing")
-                url = QUrl("https://www.bing.com/search?q=" + input);
-            else if(currentSearchEngine == "DuckDuckGo")
-                url = QUrl("https://duckduckgo.com/?q=" + input);
-            else
-                url = QUrl("https://www.google.com/search?q=" + input);
-        }
-        else
-        {
-            url = QUrl::fromUserInput(input);
-        }
-
-        for(const QString &blocked : blockedSites)
-        {
-            if(url.toString().contains(blocked))
-            {
-                view->load(QUrl("candy://blocked"));
-                return;
-            }
-        }
-
-        if(sessionStart.secsTo(QTime::currentTime()) >
-           allowedMinutes * 60)
-        {
-            view->load(QUrl("candy://timelimit"));
+        // Candy:// custom pages
+        if(u.startsWith("candy://")){
+            if(u=="candy://about") view->load(QUrl::fromLocalFile("pages/about.html"));
+            else if(u=="candy://history") view->load(QUrl::fromLocalFile("pages/history.html"));
             return;
         }
 
-        view->load(url);
+        // Blocked sites
+        if(isBlocked(u)){
+            view->load(QUrl::fromLocalFile("pages/blocked.html"));
+            return;
+        }
+
+        // Time limit
+        if(minutesLeft<=0){
+            view->load(QUrl::fromLocalFile("pages/timelimit.html"));
+            return;
+        }
+
+        // Add to history
+        history.append(u);
     });
 }
 
-void BrowserWindow::addNewTab(QUrl url)
-{
-    QWebEngineView *view = new QWebEngineView();
-
-    QWebEngineProfile::defaultProfile()
-        ->installUrlSchemeHandler("candy",
-        new CandySchemeHandler(this));
-
-    tabs->addTab(view, "New Tab");
-    tabs->setCurrentWidget(view);
-
-    connect(view, &QWebEngineView::urlChanged,
-            [=](const QUrl &url){
-        addressBar->setText(url.toString());
-    });
-
-    connect(view, &QWebEngineView::titleChanged,
-            [=](const QString &title){
-        tabs->setTabText(tabs->currentIndex(), title);
-        recordHistory(view->url(), title);
-    });
-
-    view->load(url);
+void BrowserWindow::loadPage(const QString &url){
+    view->load(QUrl(url));
 }
 
-void BrowserWindow::recordHistory(const QUrl &url,
-                                  const QString &title)
-{
-    if(url.scheme() == "http" ||
-       url.scheme() == "https")
-        historyList.append({title, url.toString()});
+bool BrowserWindow::isBlocked(const QString &url){
+    QStringList blocked = bridge->getBlockedSites();
+    for(const QString &b : blocked){
+        if(url.contains(b)) return true;
+    }
+    return false;
 }
