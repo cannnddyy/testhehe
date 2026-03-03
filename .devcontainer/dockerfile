@@ -1,0 +1,20 @@
+# Use Ubuntu 22.04 as base
+FROM ubuntu:22.04
+
+# Avoid prompts during package installs
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    git \
+    wget \
+    curl \
+    qt6-base-dev \
+    qt6-webengine-dev \
+    qt6-webchannel-dev \
+    qt6-tools-dev \
+    qt6-declarative-dev \
+    libgl1-mesa-dev \
+    && rm -rf /var/lib/apt/lists/*
