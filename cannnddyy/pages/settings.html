@@ -1,1 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cannnddyy Settings</title>
+<style>
+body{
+  margin:0;
+  font-family:sans-serif;
+  background:linear-gradient(135deg,#3b82f6,#ec4899);
+  color:white;
+  padding:40px;
+}
+h1{
+  text-align:center;
+  font-size:40px;
+  margin-bottom:40px;
+}
+.section{
+  background:rgba(255,255,255,0.15);
+  padding:25px;
+  border-radius:20px;
+  margin-bottom:25px;
+  backdrop-filter:blur(15px);
+}
+input, select{
+  padding:8px;
+  border-radius:8px;
+  border:none;
+  margin-top:5px;
+  width:100%;
+  box-sizing:border-box;
+}
+button{
+  margin-top:15px;
+  padding:10px 20px;
+  border:none;
+  border-radius:10px;
+  background:white;
+  color:#3b82f6;
+  font-weight:bold;
+  cursor:pointer;
+}
+button:hover{
+  opacity:0.85;
+}
+#blockedList{
+  margin-top:10px;
+}
+.blocked-item{
+  background:rgba(255,255,255,0.1);
+  padding:6px 10px;
+  margin-top:6px;
+  border-radius:8px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.blocked-item button{
+  background:#ec4899;
+  color:white;
+  padding:2px 8px;
+  font-weight:bold;
+  border-radius:6px;
+}
+.blocked-item button:hover{
+  opacity:0.8;
+}
+.footer{
+  position:fixed;
+  bottom:20px;
+  right:30px;
+  font-weight:bold;
+  opacity:0.8;
+}
+</style>
+</head>
+<body>
 
+<h1>⚙ Cannnddyy Settings</h1>
+
+<div class="section">
+  <h3>Search Engine</h3>
+  <select id="engine">
+    <option>Bing</option>
+    <option>DuckDuckGo</option>
+    <option>Google</option>
+  </select>
+</div>
+
+<div class="section">
+  <h3>Blocked Sites</h3>
+  <input id="blockedInput" placeholder="example.com">
+  <button onclick="addBlocked()">Add</button>
+  <div id="blockedList"></div>
+</div>
+
+<div class="section">
+  <h3>Daily Time Limit (minutes)</h3>
+  <input id="timeLimit" type="number" min="1" placeholder="60">
+</div>
+
+<div class="section">
+  <h3>Parent PIN</h3>
+  <input id="pin" type="password" placeholder="Enter PIN">
+</div>
+
+<button onclick="saveSettings()">Save Settings</button>
+
+<div class="footer">Cannnddyy</div>
+
+<script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+<script>
+var settingsBridge;
+
+new QWebChannel(qt.webChannelTransport, function(channel) {
+    settingsBridge = channel.objects.settingsBridge;
+
+    // Fill search engine
+    document.getElementById("engine").value = settingsBridge.getSearchEngine();
+
+    // Fill blocked sites
+    const blockedListDiv = document.getElementById("blockedList");
+    const sites = settingsBridge.getBlockedSites();
+    sites.forEach(function(site){
+        addBlockedItem(site);
+    });
+
+    // Fill time limit
+    document.getElementById("timeLimit").value = settingsBridge.getTimeLimit();
+
+    // Fill parent PIN
+    document.getElementById("pin").value = settingsBridge.getParentPin();
+});
+
+function addBlockedItem(site){
+    const listDiv = document.getElementById("blockedList");
+    const item = document.createElement("div");
+    item.className = "blocked-item";
+    item.innerHTML = `<span>${site}</span> <button onclick="removeBlocked(this,'${site}')">×</button>`;
+    listDiv.appendChild(item);
+}
+
+function addBlocked(){
+    const input = document.getElementById("blockedInput");
+    const val = input.value.trim();
+    if(!val) return;
+
+    addBlockedItem(val);
+    settingsBridge.addBlockedSite(val);
+    input.value = "";
+}
+
+function removeBlocked(btn,val){
+    btn.parentElement.remove();
+    settingsBridge.removeBlockedSite(val);
+}
+
+function saveSettings(){
+    const engine = document.getElementById("engine").value;
+    const timeLimit = parseInt(document.getElementById("timeLimit").value);
+    const pin = document.getElementById("pin").value;
+
+    settingsBridge.setSearchEngine(engine);
+    settingsBridge.setTimeLimit(timeLimit);
+    settingsBridge.setParentPin(pin);
+
+    alert("Settings saved locally! 🍬");
+}
+</script>
+
+</body>
+</html>
