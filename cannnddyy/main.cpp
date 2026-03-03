@@ -1,18 +1,12 @@
 #include <QApplication>
-#include <QWebEngineUrlScheme>
 #include "browserwindow.h"
 
 int main(int argc, char *argv[])
 {
-    QApplication app(argc, argv);
+    QApplication a(argc, argv);
 
-    QWebEngineUrlScheme scheme("candy");
-    scheme.setFlags(QWebEngineUrlScheme::LocalScheme |
-                    QWebEngineUrlScheme::SecureScheme);
-    QWebEngineUrlScheme::registerScheme(scheme);
+    BrowserWindow w;
+    w.showMaximized();
 
-    BrowserWindow window;
-    window.show();
-
-    return app.exec();
+    return a.exec();
 }
