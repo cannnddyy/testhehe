@@ -15,5 +15,5 @@ add_executable(Cannnddyy
 
 target_link_libraries(Cannnddyy PRIVATE Qt6::Core Qt6::Widgets Qt6::WebEngineWidgets Qt6::WebChannel)
 
-# Copy pages folder into build folder so it's available at runtime
-file(COPY Cannnddyy/pages DESTINATION ${CMAKE_BINARY_DIR})
+# copy pages from the repo folder to the same level as the executable
+file(COPY ${CMAKE_SOURCE_DIR}/cannnddyy/pages DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/cannnddyy)
