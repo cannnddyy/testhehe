@@ -1,7 +1,9 @@
 <RCC>
-    <qresource prefix="/">
-        <file>pages/about.html</file>
-        <file>pages/history.html</file>
-        <file>pages/settings.html</file>
-    </qresource>
+ <qresource prefix="/pages">
+  <file>pages/about.html</file>
+  <file>pages/history.html</file>
+  <file>pages/blocked.html</file>
+  <file>pages/timelimit.html</file>
+  <file>pages/setup.html</file>
+ </qresource>
 </RCC>
