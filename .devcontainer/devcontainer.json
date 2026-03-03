@@ -1,0 +1,11 @@
+{
+  "name": "Cannnddyy Linux Dev",
+  "dockerFile": "Dockerfile",
+  "runArgs": ["--init"],
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+  "postCreateCommand": "mkdir -p build && cd build && cmake .. && make -j$(nproc)",
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash"
+  }
+}
