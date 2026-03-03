@@ -1,21 +1,16 @@
 cmake_minimum_required(VERSION 3.16)
-
 project(Cannnddyy)
 
 set(CMAKE_CXX_STANDARD 17)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets WebEngineWidgets WebEngineCore)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets WebEngineWidgets WebChannel)
 
-qt_add_executable(Cannnddyy
+add_executable(Cannnddyy
     main.cpp
+    browserwindow.h
     browserwindow.cpp
-    candyschemehandler.cpp
+    settingsbridge.h
+    settingsbridge.cpp
 )
 
-qt_add_resources(Cannnddyy resources.qrc)
-
-target_link_libraries(Cannnddyy
-    Qt6::Widgets
-    Qt6::WebEngineWidgets
-    Qt6::WebEngineCore
-)
+target_link_libraries(Cannnddyy Qt6::Core Qt6::Widgets Qt6::WebEngineWidgets Qt6::WebChannel)
