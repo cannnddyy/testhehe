@@ -3,14 +3,17 @@ project(Cannnddyy)
 
 set(CMAKE_CXX_STANDARD 17)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets WebEngineWidgets WebChannel)
+find_package(Qt6 COMPONENTS Core Widgets WebEngineWidgets WebChannel REQUIRED)
 
 add_executable(Cannnddyy
     main.cpp
-    browserwindow.h
     browserwindow.cpp
-    settingsbridge.h
+    browserwindow.h
     settingsbridge.cpp
+    settingsbridge.h
 )
 
-target_link_libraries(Cannnddyy Qt6::Core Qt6::Widgets Qt6::WebEngineWidgets Qt6::WebChannel)
+target_link_libraries(Cannnddyy PRIVATE Qt6::Core Qt6::Widgets Qt6::WebEngineWidgets Qt6::WebChannel)
+
+# Copy pages folder into build folder so it's available at runtime
+file(COPY Cannnddyy/pages DESTINATION ${CMAKE_BINARY_DIR})
